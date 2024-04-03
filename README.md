@@ -14,7 +14,21 @@ cd capstone_ws/src/
 git clone https://github.com/Caterpiemaster/ME400.git
 ~~~~
 
-Then build package. If you have some dependency error for example ros2_control, install those with "sudo apt-get install ros-humble-ros2-control"
+Install additional dpendency.
+~~~~bash
+sudo apt install -y \
+ros-humble-hardware-interface \
+ros-humble-controller-manager \
+ros-humble-control-msgs \
+ros-humble-xacro \
+ros-humble-ros2-control \
+ros-humble-ros2-controllers \
+ros-humble-joint-state-publisher \
+ros-humble-joint-state-publisher-gui \
+~~~~
+If you have some error when you use launch.py file, please let me know.
+
+Then build package.
 
 ~~~~bash
 cd ~/capstone_ws
