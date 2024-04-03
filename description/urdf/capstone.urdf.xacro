@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!-- Basic differential drive mobile base -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="capstone_robot">
+  <xacro:arg name="prefix" default="" />
+  <xacro:arg name="use_gazebo" default="false"/>
+  <xacro:arg name="fake_hardware_" default="true"/>
+
+  <xacro:include filename="$(find diffdrive_arduino)/urdf/capstone_description.urdf.xacro" />
+
+  <!-- Import Rviz colors -->
+  <xacro:include filename="$(find diffdrive_arduino)/urdf/capstone.materials.xacro" />
+
+  <!-- Import capstone ros2_control description -->
+
+  <xacro:if value="$(arg use_gazebo)">
+    <xacro:include filename="$(find diffdrive_arduino)/ros2_control/capstone_gazebo.ros2_control.xacro" />
+  </xacro:if>
+
+  <xacro:unless value="$(arg use_gazebo)">
+    <xacro:if value="$(arg use_fake_hardware)">
+      <xacro:include filename="$(find diffdrive_arduino)/ros2_control/capstone_fake.ros2_control.xacro" />
+    </xacro:if>
+    <xacro:unless value="$(arg use_fake_hardware)">
+      <xacro:include filename="$(find diffdrive_arduino)/ros2_control/capstone.ros2_control.xacro" />
+    </xacro:unless>
+  </xacro:unless>
+
+  <xacro:capstone prefix="$(arg prefix)" />
+  <xacro:capstone_ros2_control name="Capstone" prefix="$(arg prefix)" />
+</robot>
