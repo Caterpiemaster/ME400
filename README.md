@@ -37,8 +37,8 @@ source ./install.sh
 ~~~~
 
 now launch robot description and spawn controller
-For your convenience, you can add following command in your bashrc,
 ~~~~bash
+sudo chmod 666 /dev/ttyACM0
 ros2 launch diffdrive_arduino capstone.launch.py use_fake_hardware:=false
 ~~~~
 then visualize with rviz.
