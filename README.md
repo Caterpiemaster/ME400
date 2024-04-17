@@ -25,6 +25,7 @@ ros-humble-ros2-control \
 ros-humble-ros2-controllers \
 ros-humble-joint-state-publisher \
 ros-humble-joint-state-publisher-gui \
+ros-humble-gazebo-ros2-control
 ~~~~
 If you have some error when you use launch.py file, please let me know.
 
