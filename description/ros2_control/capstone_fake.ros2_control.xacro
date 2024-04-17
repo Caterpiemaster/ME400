@@ -16,11 +16,11 @@
         <state_interface name="position"/>
         <state_interface name="velocity"/>
       </joint>
-      <!-- <joint name="${prefix}right_wheel_joint">
+      <joint name="${prefix}right_wheel_joint">
         <command_interface name="velocity"/>
         <state_interface name="position"/>
         <state_interface name="velocity"/>
-      </joint> -->
+      </joint>
     </ros2_control>
     
   </xacro:macro>

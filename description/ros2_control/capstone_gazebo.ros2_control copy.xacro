@@ -27,8 +27,8 @@
     </joint>
 
     <gazebo>
-        <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
-        <parameters>$(find diffdrive_arduino)/config/capstone_controllers.yaml</parameters>
+      <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+        <parameters>$(find diffdrive_arduino)/config/diff_drive_controller.yaml</parameters>
       </plugin>
     </gazebo>
     

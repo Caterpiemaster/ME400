@@ -42,9 +42,10 @@ class DiffDriveArduinoHardware : public hardware_interface::SystemInterface
 struct Config
 {
   std::string left_wheel_name = "";
-  // std::string right_wheel_name = "";
+  std::string right_wheel_name = "";
   float loop_rate = 0.0;
-  std::string device = "";
+  std::string device1 = "";
+  std::string device2 = "";
   int baud_rate = 0;
   int timeout_ms = 0;
   int enc_counts_per_rev = 0;
@@ -98,7 +99,7 @@ private:
   ArduinoComms comms_;
   Config cfg_;
   Wheel wheel_l_;
-  // Wheel wheel_r_;
+  Wheel wheel_r_;
 };
 
 }  // namespace diffdrive_arduino
