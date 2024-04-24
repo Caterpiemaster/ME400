@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import os
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, DeclareLaunchArgument
@@ -26,16 +27,6 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     # Get URDF via xacro
-
-    gazebo = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-             )
-    gzserver = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('gazebo_ros'), 'launch'), '/gzserver.launch.py']),
-             )
-
 
     use_gazebo_parameter_name = 'use_gazebo'
     use_fake_hardware_parameter_name = 'use_fake_hardware'
@@ -57,16 +48,9 @@ def generate_launch_description():
         [
             FindPackageShare("diffdrive_arduino"),
             "config",
-            "capstone_controllers.yaml",
+            "diff_drive_controller.yaml",
         ]
     )
-
-    # SPAWN ROBOT TO GAZEBO:
-    spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        arguments=['-topic', 'robot_description',
-                                   '-entity', 'capstone'],
-                        output='screen')
-
 
     control_node = Node(
         package="controller_manager",
@@ -74,16 +58,14 @@ def generate_launch_description():
         parameters=[robot_description, robot_controllers],
         output="both",
     )
-    
+
     robot_state_pub_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
         output="both",
         parameters=[robot_description],
-        remappings=[
-            ("/capstone_controller/cmd_vel_unstamped", "/cmd_vel"),
-        ],
     )
+
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
@@ -94,50 +76,46 @@ def generate_launch_description():
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["joint_state_broadcaster"],
-        output='screen',
+        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
 
     robot_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["velocity_controller"],
-        output='screen',
+        arguments=["diff_drive_base_controller", "--controller-manager", "/controller_manager"],
     )
 
     # Delay rviz start after `joint_state_broadcaster`
-    # delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-    #     event_handler=OnProcessExit(
-    #         target_action=joint_state_broadcaster_spawner,
-    #         on_exit=[rviz_node],
-    #     )
-    # )
+    delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=joint_state_broadcaster_spawner,
+            on_exit=[rviz_node],
+        )
+    )
 
-    # # Delay start of robot_controller after `joint_state_broadcaster`
-    # delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-    #     event_handler=OnProcessExit(
-    #         target_action=joint_state_broadcaster_spawner,
-    #         on_exit=[robot_controller_spawner],
-    #     )
-    # )
+    # Delay start of robot_controller after `joint_state_broadcaster`
+    delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=joint_state_broadcaster_spawner,
+            on_exit=[robot_controller_spawner],
+        )
+    )
+
     nodes = [
         DeclareLaunchArgument(
             'use_gazebo',
-            default_value="true" ,
+            default_value="false" ,
             description="use gazebo simulation"),
         ##############################################
         DeclareLaunchArgument(
             'use_fake_hardware',
             default_value="true",
-            description="use fake hardware interface. default is false for safety"),
-        gazebo,
-        robot_state_pub_node,
+            description="use fake hardware interface. default is true for safety"),
         control_node,
-        spawn_entity,
-        # delay_rviz_after_joint_state_broadcaster_spawner,
-        # delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
-        robot_controller_spawner,
+        robot_state_pub_node,
         joint_state_broadcaster_spawner,
+        delay_rviz_after_joint_state_broadcaster_spawner,
+        delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
     ]
-    
+
     return LaunchDescription(nodes)

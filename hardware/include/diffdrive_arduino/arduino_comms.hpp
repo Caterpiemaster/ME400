@@ -6,7 +6,7 @@
 // #include <cstdlib>
 #include <libserial/SerialPort.h>
 #include <iostream>
-
+#include "rclcpp/rclcpp.hpp"
 
 LibSerial::BaudRate convert_baud_rate(int baud_rate)
 {
@@ -36,44 +36,35 @@ public:
 
   ArduinoComms() = default;
 
-  void connect(const std::string &serial_device1, const std::string &serial_device2, int32_t baud_rate, int32_t timeout_ms)
+  void connect(const std::string &serial_device, int32_t baud_rate, int32_t timeout_ms)
   {  
-    std::cout << "try connection" << std::endl;
+    std::cout << "Try Connect!" << std::endl;
     timeout_ms_ = timeout_ms;
-    serial_conn_1.Open(serial_device1);
-    serial_conn_1.SetBaudRate(convert_baud_rate(baud_rate));
-    serial_conn_2.Open(serial_device2);
-    serial_conn_2.SetBaudRate(convert_baud_rate(baud_rate));
+    serial_conn_.Open(serial_device);
+    serial_conn_.SetBaudRate(convert_baud_rate(baud_rate));
   }
 
   void disconnect()
   {
-    std::cout << "try disconnection" << std::endl;
-    serial_conn_1.Close();
-    serial_conn_2.Close();
+    serial_conn_.Close();
   }
 
   bool connected() const
   {
-    if (serial_conn_1.IsOpen() && serial_conn_2.IsOpen()){
-      return true;
-    }
-    else{
-      return false;
-    }
+    return serial_conn_.IsOpen();
   }
 
 
-  std::string send_msg_1(const std::string &msg_to_send, bool print_output = true)
+  std::string send_msg(const std::string &msg_to_send, bool print_output = true)
   {
-    serial_conn_1.FlushIOBuffers(); // Just in case
-    serial_conn_1.Write(msg_to_send);
+    serial_conn_.FlushIOBuffers(); // Just in case
+    serial_conn_.Write(msg_to_send);
 
     std::string response = "";
     try
     {
       // Responses end with \r\n so we will read up to (and including) the \n.
-      serial_conn_1.ReadLine(response, '\n', timeout_ms_);
+      serial_conn_.ReadLine(response, '\n', timeout_ms_);
     }
     catch (const LibSerial::ReadTimeout&)
     {
@@ -88,84 +79,42 @@ public:
     return response;
   }
 
-  std::string send_msg_2(const std::string &msg_to_send, bool print_output = true)
-  {
-    serial_conn_2.FlushIOBuffers(); // Just in case
-    serial_conn_2.Write(msg_to_send);
-
-    std::string response = "";
-    try
-    {
-      // Responses end with \r\n so we will read up to (and including) the \n.
-      serial_conn_2.ReadLine(response, '\n', timeout_ms_);
-    }
-    catch (const LibSerial::ReadTimeout&)
-    {
-        std::cerr << "The ReadByte() call has timed out." << std::endl ;
-    }
-
-    if (print_output)
-    {
-      std::cout << "Sent: " << msg_to_send << " Recv: " << response << std::endl;
-    }
-
-    return response;
-  }
 
   void send_empty_msg()
   {
-    std::cout << "send empty msg" << std::endl;
-
-    std::string response1 = send_msg_1("\r");
-    std::string response2 = send_msg_2("\r");
+    std::string response = send_msg("\r");
   }
 
   void read_encoder_values(int &val_1, int &val_2)
   {
-    std::cout << "read encoder values" << std::endl;
-
-    std::string response1 = send_msg_1("e\r");
-    std::string response2 = send_msg_1("e\r");
+    std::cout << "Read Encoder Values" << std::endl;
+    std::string response = send_msg("e\r");
 
     std::string delimiter = " ";
-    size_t del_pos1 = response1.find(delimiter);
-    std::string token_1 = response1.substr(0, del_pos1);
-
-    size_t del_pos2 = response2.find(delimiter);
-    std::string token_2 = response2.substr(0, del_pos2);
-    // std::string token_2 = response.substr(del_pos + delimiter.length());
+    size_t del_pos = response.find(delimiter);
+    std::string token_1 = response.substr(0, del_pos);
+    std::string token_2 = response.substr(del_pos + delimiter.length());
 
     val_1 = std::atoi(token_1.c_str());
     val_2 = std::atoi(token_2.c_str());
   }
   void set_motor_values(int val_1, int val_2)
   {
-    std::cout << "Send Motor Values" << std::endl;
-    std::stringstream ss1;
-    std::stringstream ss2;
-    // ss << "m " << val_1 << " " << val_2 << "\r";
-    ss1 << "m " << val_1 << "\r";
-    send_msg_1(ss1.str());
-
-    ss2 << "m " << val_2 << "\r";
-    send_msg_2(ss2.str()); 
+    std::stringstream ss;
+    ss << "m " << val_1 << " " << val_2 << "\r";
+    send_msg(ss.str());
+    RCLCPP_INFO(rclcpp::get_logger("hardware_interface"), ss.str().c_str());
   }
 
   void set_pid_values(int k_p, int k_d, int k_i, int k_o)
-  { 
-    std::cout << "set pid values" << std::endl;
-    std::stringstream ss1;
-    std::stringstream ss2;
-    ss1 << "u " << k_p << ":" << k_d << ":" << k_i << ":" << k_o << "\r";
-    send_msg_1(ss1.str());
-  
-    ss2 << "u " << k_p << ":" << k_d << ":" << k_i << ":" << k_o << "\r";
-    send_msg_2(ss2.str());
+  {
+    std::stringstream ss;
+    ss << "u " << k_p << ":" << k_d << ":" << k_i << ":" << k_o << "\r";
+    send_msg(ss.str());
   }
 
 private:
-    LibSerial::SerialPort serial_conn_1;
-    LibSerial::SerialPort serial_conn_2;
+    LibSerial::SerialPort serial_conn_;
     int timeout_ms_;
 };
 

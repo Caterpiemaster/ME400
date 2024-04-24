@@ -3,7 +3,7 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="capstone_robot">
   <xacro:arg name="prefix" default="" />
   <xacro:arg name="use_gazebo" default="false"/>
-  <xacro:arg name="fake_hardware_" default="true"/>
+  <xacro:arg name="use_fake_hardware" default="true"/>
 
   <xacro:include filename="$(find diffdrive_arduino)/urdf/capstone_description.urdf.xacro" />
 

@@ -39,7 +39,8 @@ hardware_interface::CallbackReturn DiffDriveArduinoHardware::on_init(
   cfg_.left_wheel_name = info_.hardware_parameters["left_wheel_name"];
   cfg_.right_wheel_name = info_.hardware_parameters["right_wheel_name"];
   cfg_.loop_rate = std::stof(info_.hardware_parameters["loop_rate"]);
-  cfg_.device = info_.hardware_parameters["device"];
+  cfg_.device1 = info_.hardware_parameters["device1"];
+  cfg_.device2 = info_.hardware_parameters["device2"];
   cfg_.baud_rate = std::stoi(info_.hardware_parameters["baud_rate"]);
   cfg_.timeout_ms = std::stoi(info_.hardware_parameters["timeout_ms"]);
   cfg_.enc_counts_per_rev = std::stoi(info_.hardware_parameters["enc_counts_per_rev"]);
@@ -150,7 +151,7 @@ hardware_interface::CallbackReturn DiffDriveArduinoHardware::on_configure(
   {
     comms_.disconnect();
   }
-  comms_.connect(cfg_.device, cfg_.baud_rate, cfg_.timeout_ms);
+  comms_.connect(cfg_.device1, cfg_.device2, cfg_.baud_rate, cfg_.timeout_ms);
   RCLCPP_INFO(rclcpp::get_logger("DiffDriveArduinoHardware"), "Successfully configured!");
 
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -226,17 +227,15 @@ hardware_interface::return_type diffdrive_arduino ::DiffDriveArduinoHardware::wr
   {
     return hardware_interface::return_type::ERROR;
   }
-  // int motor_l_counts_per_loop = wheel_l_.cmd / wheel_l_.rads_per_count / cfg_.loop_rate;
-  // int motor_r_counts_per_loop = wheel_r_.cmd / wheel_r_.rads_per_count / cfg_.loop_rate;
-  int motor_l_counts_per_loop = wheel_l_.cmd * 90/4 + 90;
-  motor_l_counts_per_loop = std::max(-180, std::min(180, motor_l_counts_per_loop));
-  int motor_r_counts_per_loop = wheel_r_.cmd * 90/4 + 90;
-  motor_r_counts_per_loop = std::max(-180, std::min(180, motor_r_counts_per_loop));
+
+  int motor_l_counts_per_loop = wheel_l_.cmd / wheel_l_.rads_per_count / cfg_.loop_rate;
+  int motor_r_counts_per_loop = wheel_r_.cmd / wheel_r_.rads_per_count / cfg_.loop_rate;
   comms_.set_motor_values(motor_l_counts_per_loop, motor_r_counts_per_loop);
   return hardware_interface::return_type::OK;
 }
 
 }  // namespace diffdrive_arduino
+
 #include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(
   diffdrive_arduino::DiffDriveArduinoHardware, hardware_interface::SystemInterface)

@@ -14,8 +14,8 @@
 
 import os
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, DeclareLaunchArgument
-from launch.event_handlers import OnProcessExit
+from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, DeclareLaunchArgument, TimerAction
+from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 
 from launch_ros.actions import Node
@@ -27,7 +27,6 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     # Get URDF via xacro
-
     use_gazebo_parameter_name = 'use_gazebo'
     use_fake_hardware_parameter_name = 'use_fake_hardware'
     
@@ -48,15 +47,8 @@ def generate_launch_description():
         [
             FindPackageShare("diffdrive_arduino"),
             "config",
-            "capstone_controllers.yaml",
+            "diff_drive_controller.yaml",
         ]
-    )
-
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_description, robot_controllers],
-        output="both",
     )
 
     robot_state_pub_node = Node(
@@ -64,47 +56,45 @@ def generate_launch_description():
         executable="robot_state_publisher",
         output="both",
         parameters=[robot_description],
-        remappings=[
-            ("/capstone_controller/cmd_vel_unstamped", "/cmd_vel"),
-        ],
     )
 
-    rviz_node = Node(
-        package="rviz2",
-        executable="rviz2",
-        name="rviz2",
-        output="log",
+    controller_manager = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[robot_description,
+                    robot_controllers]
     )
 
-    joint_state_broadcaster_spawner = Node(
+    delayed_controller_manager = TimerAction(period=3.0, actions=[controller_manager])
+
+    diff_drive_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+        arguments=["diff_drive_base_controller"],
     )
 
-    robot_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["velocity_controller", "--controller-manager", "/controller_manager"],
-    )
-
-    # Delay rviz start after `joint_state_broadcaster`
-    delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[rviz_node],
+    delayed_diff_drive_spawner = RegisterEventHandler(
+        event_handler=OnProcessStart(
+            target_action=controller_manager,
+            on_start=[diff_drive_spawner],
         )
     )
 
-    # Delay start of robot_controller after `joint_state_broadcaster`
-    delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[robot_controller_spawner],
+    joint_broad_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["joint_state_broadcaster"],
+    )
+
+    delayed_joint_broad_spawner = RegisterEventHandler(
+        event_handler=OnProcessStart(
+            target_action=controller_manager,
+            on_start=[joint_broad_spawner],
         )
     )
 
-    nodes = [
+    # Launch them all!
+    return LaunchDescription([
         DeclareLaunchArgument(
             'use_gazebo',
             default_value="false" ,
@@ -112,13 +102,11 @@ def generate_launch_description():
         ##############################################
         DeclareLaunchArgument(
             'use_fake_hardware',
-            default_value="true",
+            default_value="false",
             description="use fake hardware interface. default is true for safety"),
-        control_node,
         robot_state_pub_node,
-        joint_state_broadcaster_spawner,
-        delay_rviz_after_joint_state_broadcaster_spawner,
-        delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
-    ]
-
-    return LaunchDescription(nodes)
+        # joystick,
+        delayed_controller_manager,
+        delayed_diff_drive_spawner,
+        delayed_joint_broad_spawner
+    ])
