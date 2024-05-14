@@ -7,6 +7,7 @@
 #include <libserial/SerialPort.h>
 #include <iostream>
 #include "rclcpp/rclcpp.hpp"
+#include <PiPCA9685/PCA9685.h>
 
 LibSerial::BaudRate convert_baud_rate(int baud_rate)
 {
@@ -40,69 +41,77 @@ public:
   {  
     std::cout << "Try Connect!" << std::endl;
     timeout_ms_ = timeout_ms;
-    serial_conn_.Open(serial_device);
-    serial_conn_.SetBaudRate(convert_baud_rate(baud_rate));
+    // serial_conn_.Open(serial_device);
+    // serial_conn_.SetBaudRate(convert_baud_rate(baud_rate));
+    pca.set_pwm_freq(60.0);
   }
 
   void disconnect()
   {
-    serial_conn_.Close();
+    // serial_conn_.Close();
+    return;
   }
 
   bool connected() const
   {
-    return serial_conn_.IsOpen();
+    // return serial_conn_.IsOpen();
+    return;
   }
 
 
-  std::string send_msg(const std::string &msg_to_send, bool print_output = true)
-  {
-    serial_conn_.FlushIOBuffers(); // Just in case
-    serial_conn_.Write(msg_to_send);
+  // std::string send_msg(const std::string &msg_to_send, bool print_output = true)
+  // {
+  //   serial_conn_.FlushIOBuffers(); // Just in case
+  //   serial_conn_.Write(msg_to_send);
 
-    std::string response = "";
-    try
-    {
-      // Responses end with \r\n so we will read up to (and including) the \n.
-      serial_conn_.ReadLine(response, '\n', timeout_ms_);
-    }
-    catch (const LibSerial::ReadTimeout&)
-    {
-        std::cerr << "The ReadByte() call has timed out." << std::endl ;
-    }
+  //   std::string response = "";
+  //   try
+  //   {
+  //     // Responses end with \r\n so we will read up to (and including) the \n.
+  //     serial_conn_.ReadLine(response, '\n', timeout_ms_);
+  //   }
+  //   catch (const LibSerial::ReadTimeout&)
+  //   {
+  //       std::cerr << "The ReadByte() call has timed out." << std::endl ;
+  //   }
 
-    if (print_output)
-    {
-      std::cout << "Sent: " << msg_to_send << " Recv: " << response << std::endl;
-    }
+  //   if (print_output)
+  //   {
+  //     std::cout << "Sent: " << msg_to_send << " Recv: " << response << std::endl;
+  //   }
 
-    return response;
-  }
+  //   return response;
+  // }
 
 
-  void send_empty_msg()
-  {
-    std::string response = send_msg("\r");
-  }
+  // void send_empty_msg()
+  // {
+  //   std::string response = send_msg("\r");
+  // }
 
   void read_encoder_values(int &val_1, int &val_2)
   {
     std::cout << "Read Encoder Values" << std::endl;
-    std::string response = send_msg("e\r");
+    // std::string response = send_msg("e\r");
 
-    std::string delimiter = " ";
-    size_t del_pos = response.find(delimiter);
-    std::string token_1 = response.substr(0, del_pos);
-    std::string token_2 = response.substr(del_pos + delimiter.length());
+    // std::string delimiter = " ";
+    // size_t del_pos = response.find(delimiter);
+    // std::string token_1 = response.substr(0, del_pos);
+    // std::string token_2 = response.substr(del_pos + delimiter.length());
 
-    val_1 = std::atoi(token_1.c_str());
-    val_2 = std::atoi(token_2.c_str());
+    // val_1 = std::atoi(token_1.c_str());
+    // val_2 = std::atoi(token_2.c_str());
+    val_1 = 0;
+    val_2 = 0;
   }
+
   void set_motor_values(int val_1, int val_2)
   {
     std::stringstream ss;
     ss << "m " << val_1 << " " << val_2 << "\r";
-    send_msg(ss.str());
+    // send_msg(ss.str());
+    pca.set_pwm(0, 0, val_1);
+    pca.set_pwm(1, 0, val_2);
     RCLCPP_INFO(rclcpp::get_logger("hardware_interface"), ss.str().c_str());
   }
 
@@ -110,11 +119,12 @@ public:
   {
     std::stringstream ss;
     ss << "u " << k_p << ":" << k_d << ":" << k_i << ":" << k_o << "\r";
-    send_msg(ss.str());
+    // send_msg(ss.str());
   }
 
 private:
-    LibSerial::SerialPort serial_conn_;
+    // LibSerial::SerialPort serial_conn_;
+    PiPCA9685::PCA9685 pca{};
     int timeout_ms_;
 };
 

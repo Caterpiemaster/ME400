@@ -22,6 +22,7 @@
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
+
 namespace diffdrive_arduino
 {
 hardware_interface::CallbackReturn DiffDriveArduinoHardware::on_init(
@@ -227,10 +228,10 @@ hardware_interface::return_type diffdrive_arduino ::DiffDriveArduinoHardware::wr
   }
   // int motor_l_counts_per_loop = wheel_l_.cmd / wheel_l_.rads_per_count / cfg_.loop_rate;
   // int motor_r_counts_per_loop = wheel_r_.cmd / wheel_r_.rads_per_count / cfg_.loop_rate;
-  int motor_l_counts_per_loop = wheel_l_.cmd * 90/4 + 94;
-  motor_l_counts_per_loop = std::max(-150, std::min(150, motor_l_counts_per_loop));
-  int motor_r_counts_per_loop = wheel_r_.cmd * 90/4 + 94;
-  motor_r_counts_per_loop = std::max(-150, std::min(150, motor_r_counts_per_loop));
+  int motor_l_counts_per_loop = wheel_l_.cmd * 90/4 + 90;
+  motor_l_counts_per_loop = std::max(-180, std::min(180, motor_l_counts_per_loop));
+  int motor_r_counts_per_loop = wheel_r_.cmd * 90/4 + 90;
+  motor_r_counts_per_loop = std::max(-180, std::min(180, motor_r_counts_per_loop));
   comms_.set_motor_values(motor_l_counts_per_loop, motor_r_counts_per_loop);
   return hardware_interface::return_type::OK;
 }
