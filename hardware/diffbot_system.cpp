@@ -22,6 +22,8 @@
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "PiPCA9685/PCA9685.h"
+
 namespace diffdrive_arduino
 {
 hardware_interface::CallbackReturn DiffDriveArduinoHardware::on_init(

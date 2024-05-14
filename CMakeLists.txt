@@ -19,6 +19,7 @@ foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
+add_subdirectory(hardware/src/PiPCA9685)
 
 ## COMPILE
 add_library(
@@ -36,7 +37,7 @@ ament_target_dependencies(
   ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 
-target_link_libraries(diffdrive_arduino PUBLIC serial)
+target_link_libraries(diffdrive_arduino PUBLIC serial PiPCA9685)
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.

@@ -7,7 +7,7 @@
 #include <libserial/SerialPort.h>
 #include <iostream>
 #include "rclcpp/rclcpp.hpp"
-#include <PiPCA9685/PCA9685.h>
+#include "PiPCA9685/PCA9685.h"
 
 LibSerial::BaudRate convert_baud_rate(int baud_rate)
 {
@@ -55,9 +55,8 @@ public:
   bool connected() const
   {
     // return serial_conn_.IsOpen();
-    return;
+    return true;
   }
-
 
   // std::string send_msg(const std::string &msg_to_send, bool print_output = true)
   // {
@@ -82,12 +81,11 @@ public:
 
   //   return response;
   // }
-
-
-  // void send_empty_msg()
-  // {
-  //   std::string response = send_msg("\r");
-  // }
+  void send_empty_msg()
+  {
+    // std::string response = send_msg("\r");
+    return;
+  }
 
   void read_encoder_values(int &val_1, int &val_2)
   {
@@ -119,9 +117,9 @@ public:
   {
     std::stringstream ss;
     ss << "u " << k_p << ":" << k_d << ":" << k_i << ":" << k_o << "\r";
-    // send_msg(ss.str());
-  }
+    // send_msg(ss.str());    // std::string response = send_msg("\r");
 
+  }
 private:
     // LibSerial::SerialPort serial_conn_;
     PiPCA9685::PCA9685 pca{};

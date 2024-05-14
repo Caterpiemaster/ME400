@@ -3,6 +3,21 @@
  
   <xacro:macro name="capstone" params="prefix">
 
+    <link name="dummy_root">
+      <visual>
+        <geometry>
+          <box size="0.001 0.001 0.001"/>
+        </geometry>
+      </visual>
+    </link>
+
+    <!-- Fixed joint to connect the dummy root to the chassis -->
+    <joint name="dummy_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="dummy_root"/>
+      <child link="chassis"/>
+    </joint>
+    
     <link name="chassis">
       <collision>
         <origin xyz="-0.151427 -0 0.5" rpy="0 0 0"/>
